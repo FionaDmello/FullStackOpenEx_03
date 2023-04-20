@@ -22,9 +22,21 @@ let data = [
     name: "Mary Poppendieck",
     number: "39-23-6423122",
   },
+  {
+    id: 5,
+    name: "Fiona Poppendieck",
+    number: "39-23-6423123",
+  },
 ];
 // initializing the server app
 const server = express();
+
+// need the following parser that allows easy access to request body that contains the post info
+server.use(express.json())
+
+const generateRandomId = () => {
+  return Math.floor(Math.random() * 10000)
+}
 
 // api definitions
 server.get("/", (req, res) =>
@@ -50,6 +62,29 @@ server.get("/info", (req, res) => {
 
 server.get("/api/persons", (req, res) => res.json(data));
 
+server.post("/api/persons", (req, res) => {
+  let body = req.body
+  if(!body) {
+    res.status(400).json({ error: 'content missing' })
+  }
+  else{
+    // check if new entry can be created
+    if (body.name && body.number) {
+      if (data.map(o => o.name.toLowerCase()).includes(body.name.toLowerCase())) res.status(406).json({ error: `Entry for ${body.name} already exists. Name must be unique.`})
+      else{
+        let idx = generateRandomId()
+        data.push({...body, id: idx });
+        res.send(`Successfully created new entry in the phonebook with id - ${idx}.`)
+      }
+    }
+    else{
+      res.status(400).json({ error: `Request missing name or number required for entry creation.` })
+    }
+  } 
+  
+
+});
+
 server.get("/api/persons/:id", (req, res) => {
   const id = req.params.id;
   //  convert stringified id into a number before comparison    
@@ -58,6 +93,17 @@ server.get("/api/persons/:id", (req, res) => {
   if (entry) res.json(entry);
   else res.status(404).end();
 });
+
+server.delete("/api/persons/:id", (req, res) => {
+  const id = req.params.id;
+  let idx = data.findIndex(item => item.id === Number(id));
+  if (idx !== -1) {
+    data.splice(idx,1)
+    //data = data
+    return res.send(`Successfully deleted entry for the phonebook.`)
+  }
+  else res.status(404).end();
+})
 
 
 // making the server listen to requests on a port
