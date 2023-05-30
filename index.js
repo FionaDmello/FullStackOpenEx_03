@@ -1,4 +1,5 @@
 const express = require("express");
+const morgan = require("morgan");
 
 //  data for the application
 let data = [
@@ -28,11 +29,21 @@ let data = [
     number: "39-23-6423123",
   },
 ];
+
+
 // initializing the server app
 const server = express();
 
 // need the following parser that allows easy access to request body that contains the post info
 server.use(express.json())
+
+// morgan token to display a POST requests body
+morgan.token('body', function(req, res){
+  return JSON.stringify(req.body)
+});
+
+// following logger used to log HTTP requests made to the server
+server.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 const generateRandomId = () => {
   return Math.floor(Math.random() * 10000)
@@ -70,15 +81,15 @@ server.post("/api/persons", (req, res) => {
   else{
     // check if new entry can be created
     if (body.name && body.number) {
-      if (data.map(o => o.name.toLowerCase()).includes(body.name.toLowerCase())) res.status(406).json({ error: `Entry for ${body.name} already exists. Name must be unique.`})
+      if (data.map(o => o.name.toLowerCase()).includes(body.name.toLowerCase())) res.status(406).json({ error: `entry for ${body.name} already exists. name must be unique.`})
       else{
         let idx = generateRandomId()
         data.push({...body, id: idx });
-        res.send(`Successfully created new entry in the phonebook with id - ${idx}.`)
+        res.send(`successfully created new entry in the phonebook with id - ${idx}.`)
       }
     }
     else{
-      res.status(400).json({ error: `Request missing name or number required for entry creation.` })
+      res.status(400).json({ error: `request missing name or number required for entry creation.` })
     }
   } 
   
