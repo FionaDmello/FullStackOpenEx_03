@@ -1,5 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
+const cors = require("cors");
 
 //  data for the application
 let data = [
@@ -33,6 +34,9 @@ let data = [
 
 // initializing the server app
 const server = express();
+
+// cors handling
+server.use(cors())
 
 // need the following parser that allows easy access to request body that contains the post info
 server.use(express.json())
@@ -84,8 +88,9 @@ server.post("/api/persons", (req, res) => {
       if (data.map(o => o.name.toLowerCase()).includes(body.name.toLowerCase())) res.status(406).json({ error: `entry for ${body.name} already exists. name must be unique.`})
       else{
         let idx = generateRandomId()
-        data.push({...body, id: idx });
-        res.send(`successfully created new entry in the phonebook with id - ${idx}.`)
+        let newEntry = {...body, id: idx }
+        data.push(newEntry);
+        res.json(newEntry);
       }
     }
     else{
