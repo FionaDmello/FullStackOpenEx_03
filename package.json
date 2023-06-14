@@ -22,7 +22,9 @@
   "homepage": "https://github.com/FionaDmello/FullStackOpenEx_03#readme",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.1.4",
     "express": "^4.18.2",
+    "mongoose": "^7.2.4",
     "morgan": "^1.10.0"
   },
   "devDependencies": {
