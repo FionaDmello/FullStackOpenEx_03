@@ -19,7 +19,7 @@ let name = (process.argv[3] && process.argv[3] !== undefined && process.argv[3] 
 let number = (process.argv[4] && process.argv[4] !== undefined && process.argv[4] !== null) ? process.argv[4] : null
 
 if(name && number) {
-    const newEntry = new Entry({ name, number})
+    const newEntry = new Entry({ name, number })
 
     newEntry.save().then(dbRes => {
         console.log('Entry saved!', dbRes)

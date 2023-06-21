@@ -2,6 +2,8 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 
+const entryModel = require("./models/entry");
+
 //  data for the application
 let data = [
   {
@@ -75,7 +77,12 @@ server.get("/info", (req, res) => {
   );
 });
 
-server.get("/api/persons", (req, res) => res.json(data));
+server.get("/api/persons", (req, res) => {
+  return entryModel.find({})
+  .then(dbRes => res.json(dbRes))
+  .catch(err => console.log('Something went wrong while fetching all entries:',err))
+  
+});
 
 server.post("/api/persons", (req, res) => {
   let body = req.body
@@ -84,21 +91,19 @@ server.post("/api/persons", (req, res) => {
   }
   else{
     // check if new entry can be created
-    if (body.name && body.number) {
+    if (body.name && body.name!== undefined && body.name !== null && body.number && body.number !== undefined && body.number !== null) {
       if (data.map(o => o.name.toLowerCase()).includes(body.name.toLowerCase())) res.status(406).json({ error: `entry for ${body.name} already exists. name must be unique.`})
       else{
-        let idx = generateRandomId()
-        let newEntry = {...body, id: idx }
-        data.push(newEntry);
-        res.json(newEntry);
+        const entry = new entryModel({...body })
+        return entry.save()
+        .then(dbRes => res.json(dbRes))
+        .catch(err => console.log('Something went wrong while creating new entry:', err))
       }
     }
     else{
       res.status(400).json({ error: `request missing name or number required for entry creation.` })
     }
   } 
-  
-
 });
 
 server.get("/api/persons/:id", (req, res) => {
