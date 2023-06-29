@@ -3,6 +3,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 
 const entryModel = require("./models/entry");
+const { application } = require("express");
 
 //  data for the application
 let data = [
@@ -115,20 +116,32 @@ server.get("/api/persons/:id", (req, res) => {
   else res.status(404).end();
 });
 
-server.delete("/api/persons/:id", (req, res) => {
+server.delete("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
-  let idx = data.findIndex(item => item.id === Number(id));
-  if (idx !== -1) {
-    data.splice(idx,1)
-    //data = data
-    return res.send(`Successfully deleted entry for the phonebook.`)
-  }
-  else res.status(404).end();
+  return entryModel.deleteOne({_id: id })
+  .then(dbRes => {
+    if(dbRes.deletedCount > 0) res.status(200).json({ message: `Successfully deleted entry for the phonebook.` })
+    else res.status(404).json({ message: `Entry with id-${id} does not exist in the database` })
+  })
+  .catch(err => next(err))
 })
-
 
 // making the server listen to requests on a port
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// error handling middleware
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: 'Invalid endpoint' })
+}
+server.use(unknownEndpoint)
+
+const errorHandler = (error, req, res, next) => {
+  if(error.name === 'CastError'){
+    return res.status(400).send({ error: 'Malformatted id' })
+  }
+  next(error)
+}
+server.use(errorHandler)
