@@ -3,8 +3,6 @@ const morgan = require("morgan");
 const cors = require("cors");
 
 const entryModel = require("./models/entry");
-const { application } = require("express");
-
 //  data for the application
 let data = [
   {
@@ -61,7 +59,7 @@ server.get("/", (req, res) =>
   res.send("<h1>Hello! this is the server speaking...</h1>")
 );
 
-server.get("/info", (req, res) => {
+server.get("/info", (req, res, next) => {
   let timestamp = new Date();
   let day = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(
     timestamp
@@ -72,20 +70,26 @@ server.get("/info", (req, res) => {
   let date = timestamp.getDate();
   let year = timestamp.getFullYear();
   let time = timestamp.toTimeString();
-
-  res.send(
-    `<div>Phonebook has info for ${data.length} people</div><div>${day} ${month} ${date} ${year} ${time}</div>`
-  );
-});
-
-server.get("/api/persons", (req, res) => {
-  return entryModel.find({})
-  .then(dbRes => res.json(dbRes))
-  .catch(err => console.log('Something went wrong while fetching all entries:',err))
+  
+  return entryModel.count({})
+  .then(dbRes => {
+    res.send( `<div>Phonebook has info for ${dbRes} people</div><div>${day} ${month} ${date} ${year} ${time}</div>` );
+  })
+  .catch(err => next(err))
   
 });
 
-server.post("/api/persons", (req, res) => {
+server.get("/api/persons", (req, res, next) => {
+  return entryModel.find({})
+  .then(dbRes => res.json(dbRes))
+  .catch(err => {
+    console.log('Something went wrong while fetching all entries:',err)
+    next(err)
+  })
+  
+});
+
+server.post("/api/persons", (req, res, next) => {
   let body = req.body
   if(!body) {
     res.status(400).json({ error: 'content missing' })
@@ -98,23 +102,43 @@ server.post("/api/persons", (req, res) => {
         const entry = new entryModel({...body })
         return entry.save()
         .then(dbRes => res.json(dbRes))
-        .catch(err => console.log('Something went wrong while creating new entry:', err))
+        .catch(err => {
+          console.log('Something went wrong while creating new entry:', err)
+          next(err)
+        })
       }
     }
     else{
-      res.status(400).json({ error: `request missing name or number required for entry creation.` })
+      res.status(400).json({ error: `Name and number required for entry creations. One or both are missing.` })
     }
   } 
 });
 
-server.get("/api/persons/:id", (req, res) => {
+server.get("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
-  //  convert stringified id into a number before comparison    
-  const entry = data.find((e) => e.id === Number(id));
-  
-  if (entry) res.json(entry);
-  else res.status(404).end();
+  return entryModel.findOne({ _id: id })
+  .then(dbRes => {
+    if (dbRes) res.json(dbRes);
+    else res.status(404).json({ error: `No entry with id- ${id} found` })
+  })
+  .catch(err => next(err))
 });
+
+server.put("/api/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+  let body = req.body;
+  if (body.name && body.name!== undefined && body.name !== null && body.number && body.number !== undefined && body.number !== null) {
+    return entryModel.updateOne({ _id: id }, { "number": body.number })
+    .then(dbRes => {
+      if(dbRes.modifiedCount > 0) res.status(200).json({ message: `Successfully updated number for entry with id-${id}`})
+      else res.status(404).json({ error: `No entry with id- ${id} was found for updation` })
+    })
+    .catch(err => next(err))
+  }
+  else{
+    res.status(400).json({ error: `Name and number required for entry updation. One or both are missing.` })
+  }
+})
 
 server.delete("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
