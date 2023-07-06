@@ -50,6 +50,8 @@ morgan.token('body', function(req, res){
 // following logger used to log HTTP requests made to the server
 server.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
+server.use(express.static('build'))
+
 const generateRandomId = () => {
   return Math.floor(Math.random() * 10000)
 }

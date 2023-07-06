@@ -11,7 +11,7 @@
     "dev": "nodemon index.js localhost 3001",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ui": " cd .. && cd FullstackOpenEx/part2/phonebook && rm -rf build && npm run build && cp -r build ../../../FullStackOpenEx_03",
-    "deploy": "npm run build:ui && cd ~/Projects/Study/FullStackOpenEx_03 && git add . && git commit -m \"fix: engine specifics added for exercise 3.21 under part3\" && git push"
+    "deploy": "npm run build:ui && cd ~/Projects/Study/FullStackOpenEx_03 && git add . && git commit -m \"fix: added middleware to serve static files for exercise 3.21 under part3\" && git push"
   },
   "repository": {
     "type": "git",
