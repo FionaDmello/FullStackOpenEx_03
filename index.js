@@ -95,24 +95,12 @@ server.post("/api/persons", (req, res, next) => {
     res.status(400).json({ error: 'content missing' })
   }
   else{
-    // check if new entry can be created
-    if (body.name && body.name!== undefined && body.name !== null && body.number && body.number !== undefined && body.number !== null) {
-      if (data.map(o => o.name.toLowerCase()).includes(body.name.toLowerCase())) res.status(406).json({ error: `entry for ${body.name} already exists. name must be unique.`})
-      else{
-        const entry = new entryModel({...body })
-        return entry.save()
-        .then(dbRes => res.json(dbRes))
-        .catch(err => {
-          console.log('Something went wrong while creating new entry:', err)
-          next(err)
-        })
-      }
+    const entry = new entryModel({...body })
+    return entry.save()
+    .then(dbRes => res.json(dbRes))
+    .catch(err => next(err))
     }
-    else{
-      res.status(400).json({ error: `Name and number required for entry creations. One or both are missing.` })
-    }
-  } 
-});
+  });
 
 server.get("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
@@ -127,16 +115,17 @@ server.get("/api/persons/:id", (req, res, next) => {
 server.put("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   let body = req.body;
-  if (body.name && body.name!== undefined && body.name !== null && body.number && body.number !== undefined && body.number !== null) {
-    return entryModel.updateOne({ _id: id }, { "number": body.number })
+  if(!body) {
+    res.status(400).json({ error: 'content missing' })
+  }
+  else{
+    return entryModel.findOneAndUpdate({ _id: id }, { "number": body.number }, { runValidators: true })
     .then(dbRes => {
-      if(dbRes.modifiedCount > 0) res.status(200).json({ message: `Successfully updated number for entry with id-${id}`})
+      console.log(dbRes)
+      if(dbRes != null ) res.status(200).json({ message: `Successfully updated number for entry with id-${id}`})
       else res.status(404).json({ error: `No entry with id- ${id} was found for updation` })
     })
     .catch(err => next(err))
-  }
-  else{
-    res.status(400).json({ error: `Name and number required for entry updation. One or both are missing.` })
   }
 })
 
@@ -164,7 +153,10 @@ server.use(unknownEndpoint)
 
 const errorHandler = (error, req, res, next) => {
   if(error.name === 'CastError'){
-    return res.status(400).send({ error: 'Malformatted id' })
+    return res.status(400).json({ error: 'Malformatted id' })
+  }
+  else if (error.name === 'ValidationError') {
+    return res.status(400).json({ error: error.message })
   }
   next(error)
 }

@@ -8,7 +8,7 @@
     "dev": "nodemon index.js localhost 3001",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ui": " cd .. && cd FullstackOpenEx/part2/phonebook && rm -rf build && npm run build && cp -r build ../../../FullStackOpenEx_03",
-    "deploy:ui": "npm run build:ui && cd ~/Projects/Study/FullStackOpenEx_03 && git add . && git commit -m \"added ui build for deployment\" && git push"
+    "deploy": "npm run build:ui && cd ~/Projects/Study/FullStackOpenEx_03 && git add . && git commit -m \"answered exercise 3.19, 3.20, 3.21 under part3\" && git push"
   },
   "repository": {
     "type": "git",
